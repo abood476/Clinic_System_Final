@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body { font-family: "Poppins", sans-serif; background: #f7faff; margin: 0; color: #333; }
+    .navbar { background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+    .brand { color: #007bff; font-weight: 700; text-decoration: none; font-size: 20px; }
+    .nav-links a { margin-left: 15px; text-decoration: none; color: #333; transition: 0.2s; }
+    .nav-links a.active, .nav-links a:hover { color: #007bff; }
+    .container { padding: 40px; }
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-top: 20px; }
+    .kpi { background: #fff; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); padding: 15px; text-align: center; }
+    .kpi .label { color: #555; font-size: 14px; }
+    .kpi .value { font-weight: 700; font-size: 22px; color: #007bff; margin-top: 6px; }
+    .card { background: #fff; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); padding: 20px; margin-top: 25px; }
+    .table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    .table th, .table td { padding: 10px; border-bottom: 1px solid #ddd; text-align: center; }
+    .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; color: white; }
+    .success { background: #28a745; }
+    .pending { background: #ffc107; color: #000; }
+    .canceled { background: #dc3545; }
+    footer { text-align: center; padding: 10px; color: #777; margin-top: 40px; }
+  </style>
+</head>
+
+<body>
+  <nav class="navbar">
+    <a class="brand" href="index.html">Clinic Appointment System</a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="patient-dashboard.html">Patient</a>
+      <a href="doctor-dashboard.html">Doctor</a>
+      <a class="active" href="admin-dashboard.html">Admin</a>
+      <a href="profile.html">Profile</a>
+    </div>
+    <div id="userBox"></div>
+  </nav>
+
+  <div class="container">
+    <h2>🧑‍💼 Admin Dashboard</h2>
+
+    <div class="kpis">
+      <div class="kpi">
+        <div class="label">Total Appointments</div>
+        <div id="kpi_total" class="value">0</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Upcoming</div>
+        <div id="kpi_upcoming" class="value">0</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Completed</div>
+        <div id="kpi_completed" class="value">0</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Canceled</div>
+        <div id="kpi_canceled" class="value">0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>📋 All Appointments</h3>
+      <table class="table">
+        <thead><tr><th>When</th><th>Patient</th><th>Doctor</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="adminRows"><tr><td colspan="5">Loading data...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>© 2025 Clinic Appointment System • Smart Blockchain Integration</footer>
+
+  <script>
+    const API_URL = "http://localhost:4000/api";
+    const tbody = document.getElementById("adminRows");
+
+    async function loadAppointments() {
+      try {
+        const res = await fetch(`${API_URL}/appointments`);
+        const data = await res.json();
+
+        if (!res.ok || !Array.isArray(data)) throw new Error("Invalid data format");
+
+        // KPIs
+        document.getElementById("kpi_total").textContent = data.length;
+        document.getElementById("kpi_upcoming").textContent = data.filter(a => !a.confirmed).length;
+        document.getElementById("kpi_completed").textContent = data.filter(a => a.confirmed).length;
+        document.getElementById("kpi_canceled").textContent = 0; // Placeholder (no cancel API yet)
+
+        // Table
+        if (!data.length) {
+          tbody.innerHTML = "<tr><td colspan='5'>No appointments found.</td></tr>";
+          return;
+        }
+
+        tbody.innerHTML = "";
+        data.forEach(appt => {
+          const status = appt.confirmed ? "Confirmed" : "Pending";
+          const badgeClass = appt.confirmed ? "success" : "pending";
+
+          tbody.innerHTML += `
+            <tr>
+              <td>${appt.date}</td>
+              <td>${appt.patientName}</td>
+              <td>${appt.doctorName}</td>
+              <td><span class="badge ${badgeClass}">${status}</span></td>
+              <td>${appt.confirmed ? "-" : `<button class="btn btn-primary" onclick="confirmAppt(${appt.id})">Confirm</button>`}</td>
+            </tr>`;
+        });
+      } catch (err) {
+        console.error("❌ Error loading data:", err);
+        tbody.innerHTML = "<tr><td colspan='5' style='color:red;'>Error loading data</td></tr>";
+      }
+    }
+
+    async function confirmAppt(id) {
+      if (!confirm("Confirm this appointment?")) return;
+      try {
+        const res = await fetch(`${API_URL}/appointments/confirm/${id}`, { method: "POST" });
+        const data = await res.json();
+        alert(data.message || "✅ Appointment confirmed!");
+        loadAppointments();
+      } catch (err) {
+        console.error("❌ Error confirming:", err);
+        alert("Failed to confirm appointment.");
+      }
+    }
+
+    loadAppointments();
+  </script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Doctor Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body { font-family: "Poppins", sans-serif; background: #f7faff; margin: 0; color: #333; }
+    .navbar { background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+    .brand { color: #007bff; font-weight: 700; text-decoration: none; font-size: 20px; }
+    .nav-links a { margin-left: 15px; text-decoration: none; color: #333; transition: 0.2s; }
+    .nav-links a.active, .nav-links a:hover { color: #007bff; }
+    .container { padding: 40px; }
+    .card { background: #fff; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); padding: 20px; margin-top: 20px; }
+    .btn { padding: 6px 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: 600; }
+    .btn-success { background: #28a745; color: #fff; }
+    .btn-success:hover { background: #1f8635; }
+    .table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    .table th, .table td { padding: 10px; border-bottom: 1px solid #ddd; text-align: center; }
+    .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; color: white; }
+    .success { background: #28a745; }
+    .pending { background: #ffc107; color: #000; }
+    footer { text-align: center; padding: 10px; color: #777; margin-top: 40px; }
+  </style>
+</head>
+
+<body>
+  <nav class="navbar">
+    <a class="brand" href="index.html">Clinic Appointment System</a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="patient-dashboard.html">Patient</a>
+      <a class="active" href="doctor-dashboard.html">Doctor</a>
+      <a href="admin-dashboard.html">Admin</a>
+      <a href="profile.html">Profile</a>
+    </div>
+    <div id="userBox"></div>
+  </nav>
+
+  <div class="container">
+    <h2>🩺 Doctor Dashboard</h2>
+    <div class="card">
+      <h3>Today's & Upcoming Appointments</h3>
+      <table class="table">
+        <thead><tr><th>When</th><th>Patient</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="docRows"><tr><td colspan="4">Loading appointments...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>© 2025 Clinic Appointment System • Smart Blockchain Integration</footer>
+
+  <script>
+  const API_URL = "http://localhost:4000/api";
+  const tbody = document.getElementById("docRows");
+
+  async function loadAppointments() {
+    try {
+      const res = await fetch(`${API_URL}/appointments`);
+      const data = await res.json();
+
+      if (!data.length) {
+        tbody.innerHTML = "<tr><td colspan='4'>No appointments found.</td></tr>";
+        return;
+      }
+
+      tbody.innerHTML = "";
+      data.forEach(appt => {
+        const status = appt.confirmed ? "Confirmed" : "Pending";
+        const badgeClass = appt.confirmed ? "success" : "pending";
+
+        // ✅ استخدم backticks فقط هنا بدون أي أقواس غير لازمة
+        tbody.innerHTML += `
+          <tr>
+            <td>${appt.date}</td>
+            <td>${appt.patientName}</td>
+            <td><span class="badge ${badgeClass}">${status}</span></td>
+            <td>
+              ${!appt.confirmed
+                ? `<button class="btn btn-success" onclick="confirmAppointment(${appt.id})">Confirm</button>`
+                : "-"}
+            </td>
+          </tr>`;
+      });
+    } catch (err) {
+      console.error("❌ Error loading appointments:", err);
+      tbody.innerHTML = "<tr><td colspan='4'>Error loading appointments.</td></tr>";
+    }
+  }
+
+  async function confirmAppointment(id) {
+    if (!confirm("Confirm this appointment?")) return;
+    try {
+      const res = await fetch(`${API_URL}/appointments/confirm/${id}`, { method: "POST" });
+      const data = await res.json();
+      alert(data.message || "✅ Appointment confirmed!");
+      loadAppointments();
+    } catch (err) {
+      console.error("❌ Error confirming appointment:", err);
+      alert("Failed to confirm appointment.");
+    }
+  }
+
+  loadAppointments();
+</script>
+</body>
+</html>

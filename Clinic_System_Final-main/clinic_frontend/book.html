@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Book Appointment | Clinic System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+    body {
+      background: #f4f9fc;
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    nav {
+      background: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      padding: 12px 0;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .navbar {
+      display: flex; justify-content: space-between; align-items: center;
+      width: 90%; margin: auto;
+    }
+    .brand {
+      font-weight: 600; font-size: 20px; color: #006d77; text-decoration: none;
+    }
+    .nav-links a {
+      margin-left: 20px; text-decoration: none; color: #333; font-weight: 500;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: #006d77; }
+
+    .container { flex: 1; display: flex; justify-content: center; align-items: center; padding: 60px 20px; }
+    .card {
+      background: white;
+      padding: 35px 40px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      width: 100%; max-width: 600px;
+      animation: fadeIn 0.6s ease-out;
+    }
+    @keyframes fadeIn { from {opacity:0; transform: translateY(15px);} to {opacity:1; transform: translateY(0);} }
+
+    h3 { text-align: center; margin-bottom: 25px; color: #003c43; }
+
+    .row { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 10px; }
+    .label { display: block; margin-bottom: 6px; font-weight: 500; color: #555; }
+    .input, select {
+      width: 100%; padding: 10px 12px; border-radius: 6px;
+      border: 1px solid #ccc; font-size: 15px;
+      transition: all .2s;
+    }
+    .input:focus, select:focus {
+      border-color: #006d77; outline: none;
+      box-shadow: 0 0 0 2px rgba(0,109,119,0.15);
+    }
+
+    .btn {
+      padding: 10px 20px; border-radius: 6px; font-size: 15px;
+      border: none; cursor: pointer; transition: all .25s ease;
+      font-weight: 500;
+    }
+    .btn-primary {
+      background: #006d77; color: white;
+    }
+    .btn-primary:hover { background: #005b63; }
+    .btn:hover:not(.btn-primary) { background: #eee; }
+
+    footer {
+      background: white; text-align: center;
+      padding: 15px; font-size: 14px;
+      color: #777; box-shadow: 0 -1px 6px rgba(0,0,0,0.05);
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="navbar container">
+      <a class="brand" href="index.html">🏥 Clinic Appointment System</a>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="patient-dashboard.html">Patient</a>
+        <a href="doctor-dashboard.html">Doctor</a>
+        <a href="admin-dashboard.html">Admin</a>
+        <a href="profile.html">Profile</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="card">
+      <h3>🩺 Book an Appointment</h3>
+      <form id="bookForm">
+        <div class="row">
+          <div style="flex:1;min-width:200px">
+            <label class="label" for="doctor">Doctor</label>
+            <select id="doctor" class="input" required>
+              <option value="" hidden>Select doctor</option>
+            </select>
+          </div>
+          <div style="flex:1;min-width:160px">
+            <label class="label" for="date">Date</label>
+            <input id="date" class="input" type="date" required>
+          </div>
+          <div style="flex:1;min-width:160px">
+            <label class="label" for="time">Time</label>
+            <select id="time" class="input" required>
+              <option value="" hidden>Select time</option>
+            </select>
+          </div>
+        </div>
+        <div class="row" style="margin-top:18px; justify-content:center;">
+          <button class="btn btn-primary" type="submit">Confirm Appointment</button>
+          <a class="btn" href="patient-dashboard.html">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer>© 2025 Clinic Appointment System • Designed by Youssef Ahmed</footer>
+
+  <script>
+    const API_URL = "http://localhost:4000/api";
+
+    // Initialize mock users if not found
+    if (!localStorage.getItem("cas_users")) {
+      localStorage.setItem(
+        "cas_users",
+        JSON.stringify([
+          { id: "u1", name: "Admin", email: "admin@clinic.com", password: "admin123", role: "admin" },
+          { id: "u2", name: "Dr. Ahmed", email: "ahmed@clinic.com", password: "doctor123", role: "doctor", specialty: "Dentist", slots: ["09:00", "10:00", "11:00", "13:00", "15:00"] },
+          { id: "u3", name: "Dr. Sarah Hassan", email: "sarah@clinic.com", password: "doctor123", role: "doctor", specialty: "Cardiologist", slots: ["10:00", "11:30", "14:00", "16:00"] },
+          { id: "u4", name: "Youssef", email: "youssef@example.com", password: "patient123", role: "patient" }
+        ])
+      );
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const users = JSON.parse(localStorage.getItem("cas_users"));
+      const currentUser = JSON.parse(localStorage.getItem("cas_current_user"));
+      const doctors = users.filter((x) => x.role === "doctor");
+
+      const doctorSelect = document.querySelector("#doctor");
+      const dateInput = document.querySelector("#date");
+      const timeSelect = document.querySelector("#time");
+
+      // Fill doctor dropdown
+      doctors.forEach((d) => {
+        const opt = document.createElement("option");
+        opt.value = d.id;
+        opt.textContent = `${d.name} (${d.specialty || "Doctor"})`;
+        doctorSelect.appendChild(opt);
+      });
+
+      // Load times dynamically
+      doctorSelect.addEventListener("change", () => {
+        timeSelect.innerHTML = '<option value="" hidden>Select time</option>';
+        const d = doctors.find((x) => x.id === doctorSelect.value);
+        (d?.slots || []).forEach((t) => {
+          const o = document.createElement("option");
+          o.value = t;
+          o.textContent = t;
+          timeSelect.appendChild(o);
+        });
+      });
+
+      // Submit appointment
+      document.querySelector("#bookForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const doctorId = doctorSelect.value;
+        const date = dateInput.value;
+        const time = timeSelect.value;
+        if (!doctorId || !date || !time) return alert("Please select doctor, date and time.");
+
+        try {
+          const res = await fetch(`${API_URL}/appointments`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              patientName: currentUser?.name || "Guest",
+              doctorName: doctors.find((x) => x.id === doctorId)?.name || "Doctor",
+              date: `${date} ${time}`,
+            }),
+          });
+
+          if (!res.ok) throw new Error("Failed to create appointment");
+          alert("✅ Appointment created successfully on blockchain!");
+          location.href = "patient-dashboard.html";
+        } catch (err) {
+          console.error("❌ Error:", err);
+          alert("Failed to book appointment, please try again.");
+        }
+      });
+    });
+  </script>
+</body>
+</html>
